@@ -45,6 +45,7 @@
     var progressBarFull = document.querySelector("#unity-progress-bar-full");
     var fullscreenButton = document.querySelector("#unity-fullscreen-button");
     var warningBanner = document.querySelector("#unity-warning");
+    var unityInstance = null; // Para usarlo global
 
     function unityShowBanner(msg, type) {
       function updateBannerVisibility() {
@@ -77,6 +78,7 @@
       showBanner: unityShowBanner,
     };
 
+    // Configuración para móviles
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
       var meta = document.createElement('meta');
       meta.name = 'viewport';
@@ -96,19 +98,28 @@
     script.onload = () => {
       createUnityInstance(canvas, config, (progress) => {
         progressBarFull.style.width = 100 * progress + "%";
-      }).then((unityInstance) => {
+      }).then((instance) => {
+        unityInstance = instance; // Guardamos la instancia
         loadingBar.style.display = "none";
         fullscreenButton.onclick = () => {
           unityInstance.SetFullscreen(1);
         };
 
-        //  Activar fullscreen al primer toque en móviles
+        // --- Activar fullscreen en móviles al tocar la pantalla ---
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
           const requestFullScreenOnTouch = () => {
             unityInstance.SetFullscreen(1);
-            document.removeEventListener("touchend", requestFullScreenOnTouch);
           };
-          document.addEventListener("touchend", requestFullScreenOnTouch, { once: true });
+
+          // Escuchar siempre el primer toque
+          document.addEventListener("touchend", requestFullScreenOnTouch);
+
+          // Reasignar el listener cada vez que el usuario regrese al navegador
+          document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) {
+              document.addEventListener("touchend", requestFullScreenOnTouch);
+            }
+          });
         }
       }).catch((message) => {
         alert(message);

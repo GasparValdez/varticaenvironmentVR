@@ -5,21 +5,9 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>KreaVerse | VARTICA Metaverse</title>
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
+
+  <!-- tu CSS separado -->
   <link rel="stylesheet" href="TemplateData/style.css">
-  <style>
-    body {
-      background-color: #000000;
-    }
-
-    #unity-canvas {
-      border: 2px solid white;
-      box-sizing: border-box;
-    }
-
-    .no-border {
-      border: none !important;
-    }
-  </style>
 </head>
 <body>
   <div id="unity-container" class="unity-desktop">
@@ -30,13 +18,16 @@
         <div id="unity-progress-bar-full"></div>
       </div>
     </div>
-    <div id="unity-warning"> </div>
+    <div id="unity-warning"></div>
     <div id="unity-footer">
       <div id="unity-webgl-logo"></div>
       <div id="unity-fullscreen-button"></div>
       <div id="unity-build-title"></div>
     </div>
   </div>
+
+  <!-- Mensaje cuando el dispositivo está en vertical -->
+  <div id="rotate-warning">Por favor, gira tu dispositivo a horizontal</div>
 
   <script>
     var container = document.querySelector("#unity-container");
@@ -45,7 +36,8 @@
     var progressBarFull = document.querySelector("#unity-progress-bar-full");
     var fullscreenButton = document.querySelector("#unity-fullscreen-button");
     var warningBanner = document.querySelector("#unity-warning");
-    var unityInstance = null; // Para usarlo global
+    var unityInstance = null;
+    var rotateWarning = document.querySelector("#rotate-warning");
 
     function unityShowBanner(msg, type) {
       function updateBannerVisibility() {
@@ -78,7 +70,7 @@
       showBanner: unityShowBanner,
     };
 
-    // Configuración para móviles
+    // Configuración móvil
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
       var meta = document.createElement('meta');
       meta.name = 'viewport';
@@ -99,22 +91,18 @@
       createUnityInstance(canvas, config, (progress) => {
         progressBarFull.style.width = 100 * progress + "%";
       }).then((instance) => {
-        unityInstance = instance; // Guardamos la instancia
+        unityInstance = instance;
         loadingBar.style.display = "none";
         fullscreenButton.onclick = () => {
           unityInstance.SetFullscreen(1);
         };
 
-        // --- Activar fullscreen en móviles al tocar la pantalla ---
+        // Fullscreen persistente en móviles
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
           const requestFullScreenOnTouch = () => {
             unityInstance.SetFullscreen(1);
           };
-
-          // Escuchar siempre el primer toque
           document.addEventListener("touchend", requestFullScreenOnTouch);
-
-          // Reasignar el listener cada vez que el usuario regrese al navegador
           document.addEventListener("visibilitychange", () => {
             if (!document.hidden) {
               document.addEventListener("touchend", requestFullScreenOnTouch);
@@ -127,7 +115,7 @@
     };
     document.body.appendChild(script);
 
-    // Detectar cambio de pantalla completa y quitar borde
+    // Detectar cambios de fullscreen → quitar borde
     document.addEventListener("fullscreenchange", () => {
       if (document.fullscreenElement) {
         canvas.classList.add("no-border");
@@ -135,6 +123,29 @@
         canvas.classList.remove("no-border");
       }
     });
+
+    // Forzar orientación horizontal
+    function enforceLandscape() {
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape");
+        }
+      } catch (err) {
+        console.log("No se pudo bloquear orientación nativa:", err);
+      }
+
+      if (window.innerHeight > window.innerWidth) {
+        canvas.classList.add("force-landscape");
+        rotateWarning.style.display = "block";
+      } else {
+        canvas.classList.remove("force-landscape");
+        rotateWarning.style.display = "none";
+      }
+    }
+
+    window.addEventListener("resize", enforceLandscape);
+    window.addEventListener("orientationchange", enforceLandscape);
+    enforceLandscape();
   </script>
 </body>
 </html>

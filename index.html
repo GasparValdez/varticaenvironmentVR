@@ -124,24 +124,25 @@
       }
     });
 
-    // Forzar orientación horizontal
-    function enforceLandscape() {
-      try {
-        if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock("landscape");
-        }
-      } catch (err) {
-        console.log("No se pudo bloquear orientación nativa:", err);
-      }
+  function enforceLandscape() {
+  // Detectar orientación actual
+  const isPortrait = window.innerHeight > window.innerWidth;
 
-      if (window.innerHeight > window.innerWidth) {
-        canvas.classList.add("force-landscape");
-        rotateWarning.style.display = "block";
-      } else {
-        canvas.classList.remove("force-landscape");
-        rotateWarning.style.display = "none";
-      }
-    }
+  // Mostrar advertencia si está en vertical
+  if (isPortrait) {
+    rotateWarning.style.display = "flex";  // flex para centrar vertical/horizontal
+    canvas.style.display = "none";         // ocultar canvas mientras tanto
+  } else {
+    rotateWarning.style.display = "none";
+    canvas.style.display = "block";
+  }
+
+  // Intentar bloquear orientación (solo funcionará en fullscreen o PWA)
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock("landscape").catch(() => {});
+  }
+}
+
 
     window.addEventListener("resize", enforceLandscape);
     window.addEventListener("orientationchange", enforceLandscape);

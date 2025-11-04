@@ -10,7 +10,7 @@
 </head>
 <body>
   <div id="unity-container" class="unity-desktop">
-    <canvas id="unity-canvas" width="960" height="600"></canvas>
+    <canvas id="unity-canvas" width=960 height=600></canvas>
     <div id="unity-loading-bar">
       <div id="unity-logo"></div>
       <div id="unity-progress-bar-empty">
@@ -25,10 +25,8 @@
     </div>
   </div>
 
-  <!-- Marca de agua con imagen y texto -->
-  <div class="watermark-combined">
-    <div class="watermark-text"></div>
-  </div>
+  <!-- Marca de agua -->
+  <div class="watermark-image"></div>
 
   <!-- Mensaje orientación -->
   <div id="rotate-warning">
@@ -36,29 +34,40 @@
   </div>
 
 <script>
-  const container = document.querySelector("#unity-container");
-  const canvas = document.querySelector("#unity-canvas");
-  const loadingBar = document.querySelector("#unity-loading-bar");
-  const progressBarFull = document.querySelector("#unity-progress-bar-full");
-  const fullscreenButton = document.querySelector("#unity-fullscreen-button");
-  const warningBanner = document.querySelector("#unity-warning");
-  const rotateWarning = document.querySelector("#rotate-warning");
-  const watermark = document.querySelector(".watermark-combined");
-  const watermarkText = document.querySelector(".watermark-text");
-  let unityInstance = null;
-  let blurTimeout = null;
+  var container = document.querySelector("#unity-container");
+  var canvas = document.querySelector("#unity-canvas");
+  var loadingBar = document.querySelector("#unity-loading-bar");
+  var progressBarFull = document.querySelector("#unity-progress-bar-full");
+  var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+  var warningBanner = document.querySelector("#unity-warning");
+  var rotateWarning = document.querySelector("#rotate-warning");
+  var watermark = document.querySelector(".watermark-image");
+  var unityInstance = null;
+
+  let blurActive = false; // estado actual
+  let blurTimeout = null; // timeout para clic derecho
 
   function unityShowBanner(msg, type) {
-    const div = document.createElement('div');
+    function updateBannerVisibility() {
+      warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+    }
+    var div = document.createElement('div');
     div.innerHTML = msg;
     warningBanner.appendChild(div);
-    div.style = (type === 'error') ? 'background: red; padding: 10px;' : 'background: yellow; padding: 10px;';
-    setTimeout(() => div.remove(), 5000);
+    if (type == 'error') div.style = 'background: red; padding: 10px;';
+    else {
+      if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+      setTimeout(function () {
+        warningBanner.removeChild(div);
+        updateBannerVisibility();
+      }, 5000);
+    }
+    updateBannerVisibility();
   }
 
-  const buildUrl = "Build";
-  const loaderUrl = buildUrl + "/game.loader.js";
-  const config = {
+  var buildUrl = "Build";
+  var loaderUrl = buildUrl + "/game.loader.js";
+  var config = {
     dataUrl: buildUrl + "/game.data",
     frameworkUrl: buildUrl + "/game.framework.js",
     codeUrl: buildUrl + "/game.wasm",
@@ -71,10 +80,10 @@
 
   // Configuración móvil
   if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-    const meta = document.createElement('meta');
+    var meta = document.createElement('meta');
     meta.name = 'viewport';
     meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-    document.head.appendChild(meta);
+    document.getElementsByTagName('head')[0].appendChild(meta);
     container.className = "unity-mobile";
     canvas.className = "unity-mobile";
   } else {
@@ -84,7 +93,7 @@
 
   loadingBar.style.display = "block";
 
-  const script = document.createElement("script");
+  var script = document.createElement("script");
   script.src = loaderUrl;
   script.onload = () => {
     createUnityInstance(canvas, config, (progress) => {
@@ -93,60 +102,113 @@
       unityInstance = instance;
       loadingBar.style.display = "none";
       fullscreenButton.onclick = () => unityInstance.SetFullscreen(1);
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        const requestFullScreenOnTouch = () => unityInstance.SetFullscreen(1);
+        document.addEventListener("touchend", requestFullScreenOnTouch);
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) document.addEventListener("touchend", requestFullScreenOnTouch);
+        });
+      }
     }).catch((message) => alert(message));
   };
   document.body.appendChild(script);
 
-  // --- Fullscreen: mantener marca de agua ---
-  document.addEventListener("fullscreenchange", () => {
-    const isFullscreen = !!document.fullscreenElement;
-    watermark.classList.toggle("fullscreen", isFullscreen);
-  });
+  // Detectar cambios de fullscreen → quitar borde
+  // Detectar cambios de fullscreen → sincronizar borde y marca de agua
+// --- Fullscreen: sincronizar borde y marca de agua ---
+document.addEventListener("fullscreenchange", () => {
+  const isFullscreen = !!document.fullscreenElement;
 
-  // --- Blur + Marca de agua sincronizados ---
+  if (isFullscreen) {
+    canvas.classList.add("no-border");
+
+    // Crear una capa sobre el canvas visible en fullscreen
+    if (!document.querySelector(".watermark-fullscreen")) {
+      const wmClone = document.createElement("div");
+      wmClone.className = "watermark-fullscreen";
+      wmClone.style.position = "fixed";
+      wmClone.style.top = "0";
+      wmClone.style.left = "0";
+      wmClone.style.width = "100%";
+      wmClone.style.height = "100%";
+      wmClone.style.pointerEvents = "none";
+      wmClone.style.zIndex = "999999";
+      wmClone.style.opacity = "0.15";
+      wmClone.style.backgroundImage = getComputedStyle(watermark).backgroundImage;
+      wmClone.style.backgroundRepeat = "repeat";
+      wmClone.style.backgroundPosition = "center";
+      wmClone.style.backgroundSize = "250px";
+      wmClone.style.transform = "rotate(-25deg)";
+      wmClone.style.mixBlendMode = "overlay";
+
+      // Adjuntar directamente al body (se mantiene visible en fullscreen)
+      document.body.appendChild(wmClone);
+    }
+  } else {
+    canvas.classList.remove("no-border");
+
+    // Eliminar la marca de agua temporal
+    const fsWatermark = document.querySelector(".watermark-fullscreen");
+    if (fsWatermark) fsWatermark.remove();
+  }
+});
+
+
+
+  // --- Blur + Watermark sincronizados ---
   function applyBlur(state) {
-    canvas.classList.toggle("blurred", state);
-    watermark.classList.toggle("visible", state);
+    blurActive = state;
+    if (state) {
+      canvas.classList.add("blurred");
+      watermark.classList.add("watermark-active");
+    } else {
+      canvas.classList.remove("blurred");
+      watermark.classList.remove("watermark-active");
+    }
   }
 
-  // Eventos de pérdida de foco
+  // Pérdida de foco / cambio de pestaña
   document.addEventListener("visibilitychange", () => applyBlur(document.hidden));
   window.addEventListener("blur", () => applyBlur(true));
   window.addEventListener("focus", () => applyBlur(false));
   window.addEventListener("mouseleave", () => applyBlur(true));
   window.addEventListener("mouseenter", () => applyBlur(false));
 
-  // 🚫 Bloquear clic derecho + desenfocar temporalmente
-  document.addEventListener("contextmenu", (e) => {
-    e.preventDefault();
+  // 🚫 Bloquear clic derecho + mantener lógica sincronizada
+  document.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
     applyBlur(true);
+
+    // Limpia cualquier timeout previo
     if (blurTimeout) clearTimeout(blurTimeout);
+
+    // Solo quita el blur si sigue enfocado después de 4s
     blurTimeout = setTimeout(() => {
-      if (!document.hidden && document.hasFocus()) applyBlur(false);
+      if (!document.hidden && document.hasFocus()) {
+        applyBlur(false);
+      }
     }, 4000);
   });
 
-  // Bloquear orientación vertical
+  // Bloqueo de orientación
   function enforceLandscape() {
     const isPortrait = window.innerHeight > window.innerWidth;
-    rotateWarning.style.display = isPortrait ? "flex" : "none";
-    canvas.style.display = isPortrait ? "none" : "block";
+    if (isPortrait) {
+      rotateWarning.style.display = "flex";
+      canvas.style.display = "none";
+    } else {
+      rotateWarning.style.display = "none";
+      canvas.style.display = "block";
+    }
     if (screen.orientation && screen.orientation.lock) {
       screen.orientation.lock("landscape").catch(() => {});
     }
   }
+
   window.addEventListener("resize", enforceLandscape);
   window.addEventListener("orientationchange", enforceLandscape);
   enforceLandscape();
-
-  // --- Marca de agua dinámica personalizada ---
-  function setDynamicWatermark(userText) {
-    const repeated = Array(10).fill(userText).join(" • ");
-    watermarkText.textContent = repeated;
-  }
-
-  // Ejemplo: texto de usuario o sesión
-  setDynamicWatermark("KreaVerse ©2025 — Usuario: DemoUser");
 </script>
 </body>
 </html>

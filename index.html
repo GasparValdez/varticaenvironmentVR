@@ -6,8 +6,6 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>KreaVerse | VARTICA Metaverse</title>
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
-
-  <!-- CSS separado -->
   <link rel="stylesheet" href="TemplateData/style.css">
 </head>
 <body>
@@ -27,10 +25,10 @@
     </div>
   </div>
 
-  <!-- Marca de agua repetida -->
+  <!-- Marca de agua -->
   <div class="watermark-image"></div>
 
-  <!-- Mensaje cuando el dispositivo está en vertical -->
+  <!-- Mensaje orientación -->
   <div id="rotate-warning">
     Por favor, gira tu dispositivo en horizontal. / Please, rotate your device horizontally.
   </div>
@@ -42,9 +40,9 @@
   var progressBarFull = document.querySelector("#unity-progress-bar-full");
   var fullscreenButton = document.querySelector("#unity-fullscreen-button");
   var warningBanner = document.querySelector("#unity-warning");
-  var unityInstance = null;
   var rotateWarning = document.querySelector("#rotate-warning");
   var watermark = document.querySelector(".watermark-image");
+  var unityInstance = null;
 
   function unityShowBanner(msg, type) {
     function updateBannerVisibility() {
@@ -106,32 +104,23 @@
 
       // Fullscreen persistente en móviles
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        const requestFullScreenOnTouch = () => {
-          unityInstance.SetFullscreen(1);
-        };
+        const requestFullScreenOnTouch = () => unityInstance.SetFullscreen(1);
         document.addEventListener("touchend", requestFullScreenOnTouch);
         document.addEventListener("visibilitychange", () => {
-          if (!document.hidden) {
-            document.addEventListener("touchend", requestFullScreenOnTouch);
-          }
+          if (!document.hidden) document.addEventListener("touchend", requestFullScreenOnTouch);
         });
       }
-    }).catch((message) => {
-      alert(message);
-    });
+    }).catch((message) => alert(message));
   };
   document.body.appendChild(script);
 
   // Detectar cambios de fullscreen → quitar borde
   document.addEventListener("fullscreenchange", () => {
-    if (document.fullscreenElement) {
-      canvas.classList.add("no-border");
-    } else {
-      canvas.classList.remove("no-border");
-    }
+    if (document.fullscreenElement) canvas.classList.add("no-border");
+    else canvas.classList.remove("no-border");
   });
 
-  // 📷 Blur y marca de agua sincronizados
+  // --- Blur + Watermark sincronizados ---
   function applyBlur(state) {
     if (state) {
       canvas.classList.add("blurred");
@@ -142,16 +131,20 @@
     }
   }
 
-  // Cuando la pestaña pierde visibilidad
-  document.addEventListener("visibilitychange", () => {
-    applyBlur(document.hidden);
-  });
-
-  // Cuando el cursor o el foco sale/entra a la ventana
+  // Pérdida de foco / cambio de pestaña
+  document.addEventListener("visibilitychange", () => applyBlur(document.hidden));
   window.addEventListener("blur", () => applyBlur(true));
   window.addEventListener("focus", () => applyBlur(false));
   window.addEventListener("mouseleave", () => applyBlur(true));
   window.addEventListener("mouseenter", () => applyBlur(false));
+
+  // 🚫 Bloquear clic derecho y activar marca de agua
+  document.addEventListener("contextmenu", (event) => {
+    event.preventDefault(); // bloquea el menú
+    applyBlur(true);
+    // quitar el efecto después de 4 segundos
+    setTimeout(() => applyBlur(false), 4000);
+  });
 
   // Bloqueo de orientación
   function enforceLandscape() {

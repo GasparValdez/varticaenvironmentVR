@@ -35,7 +35,7 @@
     Por favor, gira tu dispositivo en horizontal. / Please, rotate your device horizontally.
   </div>
 
-  <script>
+<script>
   var container = document.querySelector("#unity-container");
   var canvas = document.querySelector("#unity-canvas");
   var loadingBar = document.querySelector("#unity-loading-bar");
@@ -44,6 +44,7 @@
   var warningBanner = document.querySelector("#unity-warning");
   var unityInstance = null;
   var rotateWarning = document.querySelector("#rotate-warning");
+  var watermark = document.querySelector(".watermark-image");
 
   function unityShowBanner(msg, type) {
     function updateBannerVisibility() {
@@ -130,10 +131,15 @@
     }
   });
 
-  // 📷 Desenfoque si el usuario cambia de pestaña o saca el mouse
+  // 📷 Blur y marca de agua sincronizados
   function applyBlur(state) {
-    if (state) canvas.classList.add("blurred");
-    else canvas.classList.remove("blurred");
+    if (state) {
+      canvas.classList.add("blurred");
+      watermark.classList.add("watermark-active");
+    } else {
+      canvas.classList.remove("blurred");
+      watermark.classList.remove("watermark-active");
+    }
   }
 
   // Cuando la pestaña pierde visibilidad
@@ -165,6 +171,7 @@
   window.addEventListener("resize", enforceLandscape);
   window.addEventListener("orientationchange", enforceLandscape);
   enforceLandscape();
-  </script>
+</script>
+
 </body>
 </html>

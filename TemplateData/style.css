@@ -76,11 +76,18 @@ body {
   height: 100%;
   pointer-events: none;
   z-index: 9998;
-  background-image: url('watermark.png'); /* tu imagen aquí */
+  background-image: url('watermark.png');
   background-repeat: repeat;
   background-position: center;
   background-size: 250px;
-  opacity: 0.15;
+  opacity: 0; /* oculta por defecto */
   transform: rotate(-25deg);
   mix-blend-mode: overlay;
+  transition: opacity 0.4s ease;
 }
+
+/* visible solo cuando se activa */
+.watermark-active {
+  opacity: 0.15;
+}
+

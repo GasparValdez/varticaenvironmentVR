@@ -3,14 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<style>
-  html, body { -webkit-text-size-adjust: none; }
-</style>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>KreaVerse | VARTICA Metaverse</title>
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
 
-  <!-- tu CSS separado -->
+  <!-- CSS separado -->
   <link rel="stylesheet" href="TemplateData/style.css">
 </head>
 <body>
@@ -30,8 +27,13 @@
     </div>
   </div>
 
+  <!-- Marca de agua repetida -->
+  <div class="watermark-image"></div>
+
   <!-- Mensaje cuando el dispositivo está en vertical -->
-  <div id="rotate-warning">Por favor, gira tu dispositivo en horizontal. / Please, rotate your device horizontally.</div>
+  <div id="rotate-warning">
+    Por favor, gira tu dispositivo en horizontal. / Please, rotate your device horizontally.
+  </div>
 
   <script>
     var container = document.querySelector("#unity-container");
@@ -128,25 +130,29 @@
       }
     });
 
-  function enforceLandscape() {
-  // Detectar orientación actual
-  const isPortrait = window.innerHeight > window.innerWidth;
+    // 📷 Desenfoque si el usuario cambia de pestaña
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        canvas.classList.add("blurred");
+      } else {
+        canvas.classList.remove("blurred");
+      }
+    });
 
-  // Mostrar advertencia si está en vertical
-  if (isPortrait) {
-    rotateWarning.style.display = "flex";  // flex para centrar vertical/horizontal
-    canvas.style.display = "none";         // ocultar canvas mientras tanto
-  } else {
-    rotateWarning.style.display = "none";
-    canvas.style.display = "block";
-  }
-
-  // Intentar bloquear orientación (solo funcionará en fullscreen o PWA)
-  if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock("landscape").catch(() => {});
-  }
-}
-
+    // Bloqueo de orientación
+    function enforceLandscape() {
+      const isPortrait = window.innerHeight > window.innerWidth;
+      if (isPortrait) {
+        rotateWarning.style.display = "flex";
+        canvas.style.display = "none";
+      } else {
+        rotateWarning.style.display = "none";
+        canvas.style.display = "block";
+      }
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch(() => {});
+      }
+    }
 
     window.addEventListener("resize", enforceLandscape);
     window.addEventListener("orientationchange", enforceLandscape);

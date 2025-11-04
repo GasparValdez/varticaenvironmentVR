@@ -36,127 +36,135 @@
   </div>
 
   <script>
-    var container = document.querySelector("#unity-container");
-    var canvas = document.querySelector("#unity-canvas");
-    var loadingBar = document.querySelector("#unity-loading-bar");
-    var progressBarFull = document.querySelector("#unity-progress-bar-full");
-    var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-    var warningBanner = document.querySelector("#unity-warning");
-    var unityInstance = null;
-    var rotateWarning = document.querySelector("#rotate-warning");
+  var container = document.querySelector("#unity-container");
+  var canvas = document.querySelector("#unity-canvas");
+  var loadingBar = document.querySelector("#unity-loading-bar");
+  var progressBarFull = document.querySelector("#unity-progress-bar-full");
+  var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+  var warningBanner = document.querySelector("#unity-warning");
+  var unityInstance = null;
+  var rotateWarning = document.querySelector("#rotate-warning");
 
-    function unityShowBanner(msg, type) {
-      function updateBannerVisibility() {
-        warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-      }
-      var div = document.createElement('div');
-      div.innerHTML = msg;
-      warningBanner.appendChild(div);
-      if (type == 'error') div.style = 'background: red; padding: 10px;';
-      else {
-        if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-        setTimeout(function () {
-          warningBanner.removeChild(div);
-          updateBannerVisibility();
-        }, 5000);
-      }
-      updateBannerVisibility();
+  function unityShowBanner(msg, type) {
+    function updateBannerVisibility() {
+      warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
     }
-
-    var buildUrl = "Build";
-    var loaderUrl = buildUrl + "/game.loader.js";
-    var config = {
-      dataUrl: buildUrl + "/game.data",
-      frameworkUrl: buildUrl + "/game.framework.js",
-      codeUrl: buildUrl + "/game.wasm",
-      streamingAssetsUrl: "StreamingAssets",
-      companyName: "KreaVerse",
-      productName: "VARTICAMetaverse",
-      productVersion: "0.1",
-      showBanner: unityShowBanner,
-    };
-
-    // Configuración móvil
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      var meta = document.createElement('meta');
-      meta.name = 'viewport';
-      meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-      document.getElementsByTagName('head')[0].appendChild(meta);
-      container.className = "unity-mobile";
-      canvas.className = "unity-mobile";
-    } else {
-      canvas.style.width = "960px";
-      canvas.style.height = "600px";
+    var div = document.createElement('div');
+    div.innerHTML = msg;
+    warningBanner.appendChild(div);
+    if (type == 'error') div.style = 'background: red; padding: 10px;';
+    else {
+      if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+      setTimeout(function () {
+        warningBanner.removeChild(div);
+        updateBannerVisibility();
+      }, 5000);
     }
+    updateBannerVisibility();
+  }
 
-    loadingBar.style.display = "block";
+  var buildUrl = "Build";
+  var loaderUrl = buildUrl + "/game.loader.js";
+  var config = {
+    dataUrl: buildUrl + "/game.data",
+    frameworkUrl: buildUrl + "/game.framework.js",
+    codeUrl: buildUrl + "/game.wasm",
+    streamingAssetsUrl: "StreamingAssets",
+    companyName: "KreaVerse",
+    productName: "VARTICAMetaverse",
+    productVersion: "0.1",
+    showBanner: unityShowBanner,
+  };
 
-    var script = document.createElement("script");
-    script.src = loaderUrl;
-    script.onload = () => {
-      createUnityInstance(canvas, config, (progress) => {
-        progressBarFull.style.width = 100 * progress + "%";
-      }).then((instance) => {
-        unityInstance = instance;
-        loadingBar.style.display = "none";
-        fullscreenButton.onclick = () => {
+  // Configuración móvil
+  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    var meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+    document.getElementsByTagName('head')[0].appendChild(meta);
+    container.className = "unity-mobile";
+    canvas.className = "unity-mobile";
+  } else {
+    canvas.style.width = "960px";
+    canvas.style.height = "600px";
+  }
+
+  loadingBar.style.display = "block";
+
+  var script = document.createElement("script");
+  script.src = loaderUrl;
+  script.onload = () => {
+    createUnityInstance(canvas, config, (progress) => {
+      progressBarFull.style.width = 100 * progress + "%";
+    }).then((instance) => {
+      unityInstance = instance;
+      loadingBar.style.display = "none";
+      fullscreenButton.onclick = () => {
+        unityInstance.SetFullscreen(1);
+      };
+
+      // Fullscreen persistente en móviles
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        const requestFullScreenOnTouch = () => {
           unityInstance.SetFullscreen(1);
         };
-
-        // Fullscreen persistente en móviles
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-          const requestFullScreenOnTouch = () => {
-            unityInstance.SetFullscreen(1);
-          };
-          document.addEventListener("touchend", requestFullScreenOnTouch);
-          document.addEventListener("visibilitychange", () => {
-            if (!document.hidden) {
-              document.addEventListener("touchend", requestFullScreenOnTouch);
-            }
-          });
-        }
-      }).catch((message) => {
-        alert(message);
-      });
-    };
-    document.body.appendChild(script);
-
-    // Detectar cambios de fullscreen → quitar borde
-    document.addEventListener("fullscreenchange", () => {
-      if (document.fullscreenElement) {
-        canvas.classList.add("no-border");
-      } else {
-        canvas.classList.remove("no-border");
+        document.addEventListener("touchend", requestFullScreenOnTouch);
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) {
+            document.addEventListener("touchend", requestFullScreenOnTouch);
+          }
+        });
       }
+    }).catch((message) => {
+      alert(message);
     });
+  };
+  document.body.appendChild(script);
 
-    // 📷 Desenfoque si el usuario cambia de pestaña
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        canvas.classList.add("blurred");
-      } else {
-        canvas.classList.remove("blurred");
-      }
-    });
-
-    // Bloqueo de orientación
-    function enforceLandscape() {
-      const isPortrait = window.innerHeight > window.innerWidth;
-      if (isPortrait) {
-        rotateWarning.style.display = "flex";
-        canvas.style.display = "none";
-      } else {
-        rotateWarning.style.display = "none";
-        canvas.style.display = "block";
-      }
-      if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock("landscape").catch(() => {});
-      }
+  // Detectar cambios de fullscreen → quitar borde
+  document.addEventListener("fullscreenchange", () => {
+    if (document.fullscreenElement) {
+      canvas.classList.add("no-border");
+    } else {
+      canvas.classList.remove("no-border");
     }
+  });
 
-    window.addEventListener("resize", enforceLandscape);
-    window.addEventListener("orientationchange", enforceLandscape);
-    enforceLandscape();
+  // 📷 Desenfoque si el usuario cambia de pestaña o saca el mouse
+  function applyBlur(state) {
+    if (state) canvas.classList.add("blurred");
+    else canvas.classList.remove("blurred");
+  }
+
+  // Cuando la pestaña pierde visibilidad
+  document.addEventListener("visibilitychange", () => {
+    applyBlur(document.hidden);
+  });
+
+  // Cuando el cursor o el foco sale/entra a la ventana
+  window.addEventListener("blur", () => applyBlur(true));
+  window.addEventListener("focus", () => applyBlur(false));
+  window.addEventListener("mouseleave", () => applyBlur(true));
+  window.addEventListener("mouseenter", () => applyBlur(false));
+
+  // Bloqueo de orientación
+  function enforceLandscape() {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    if (isPortrait) {
+      rotateWarning.style.display = "flex";
+      canvas.style.display = "none";
+    } else {
+      rotateWarning.style.display = "none";
+      canvas.style.display = "block";
+    }
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock("landscape").catch(() => {});
+    }
+  }
+
+  window.addEventListener("resize", enforceLandscape);
+  window.addEventListener("orientationchange", enforceLandscape);
+  enforceLandscape();
   </script>
 </body>
 </html>

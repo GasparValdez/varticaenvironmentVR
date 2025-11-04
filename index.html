@@ -116,38 +116,44 @@
 
   // Detectar cambios de fullscreen → quitar borde
   // Detectar cambios de fullscreen → sincronizar borde y marca de agua
+// --- Fullscreen: sincronizar borde y marca de agua ---
 document.addEventListener("fullscreenchange", () => {
   const isFullscreen = !!document.fullscreenElement;
 
   if (isFullscreen) {
     canvas.classList.add("no-border");
 
-    // Clonar marca de agua dentro del contenedor (para que se vea en fullscreen)
+    // Crear una capa sobre el canvas visible en fullscreen
     if (!document.querySelector(".watermark-fullscreen")) {
-      const wmClone = watermark.cloneNode(true);
-      wmClone.classList.add("watermark-fullscreen");
-      wmClone.style.position = "absolute";
+      const wmClone = document.createElement("div");
+      wmClone.className = "watermark-fullscreen";
+      wmClone.style.position = "fixed";
       wmClone.style.top = "0";
       wmClone.style.left = "0";
       wmClone.style.width = "100%";
       wmClone.style.height = "100%";
-      wmClone.style.zIndex = "10000";
       wmClone.style.pointerEvents = "none";
+      wmClone.style.zIndex = "999999";
       wmClone.style.opacity = "0.15";
+      wmClone.style.backgroundImage = getComputedStyle(watermark).backgroundImage;
+      wmClone.style.backgroundRepeat = "repeat";
+      wmClone.style.backgroundPosition = "center";
       wmClone.style.backgroundSize = "250px";
       wmClone.style.transform = "rotate(-25deg)";
-      wmClone.style.backgroundImage = watermark.style.backgroundImage;
-      container.appendChild(wmClone);
-    }
+      wmClone.style.mixBlendMode = "overlay";
 
+      // Adjuntar directamente al body (se mantiene visible en fullscreen)
+      document.body.appendChild(wmClone);
+    }
   } else {
     canvas.classList.remove("no-border");
 
-    // Eliminar la marca de agua temporal al salir de fullscreen
+    // Eliminar la marca de agua temporal
     const fsWatermark = document.querySelector(".watermark-fullscreen");
     if (fsWatermark) fsWatermark.remove();
   }
 });
+
 
 
   // --- Blur + Watermark sincronizados ---

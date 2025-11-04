@@ -44,6 +44,9 @@
   var watermark = document.querySelector(".watermark-image");
   var unityInstance = null;
 
+  let blurActive = false; // estado actual
+  let blurTimeout = null; // timeout para clic derecho
+
   function unityShowBanner(msg, type) {
     function updateBannerVisibility() {
       warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
@@ -98,11 +101,8 @@
     }).then((instance) => {
       unityInstance = instance;
       loadingBar.style.display = "none";
-      fullscreenButton.onclick = () => {
-        unityInstance.SetFullscreen(1);
-      };
+      fullscreenButton.onclick = () => unityInstance.SetFullscreen(1);
 
-      // Fullscreen persistente en móviles
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
         const requestFullScreenOnTouch = () => unityInstance.SetFullscreen(1);
         document.addEventListener("touchend", requestFullScreenOnTouch);
@@ -122,6 +122,7 @@
 
   // --- Blur + Watermark sincronizados ---
   function applyBlur(state) {
+    blurActive = state;
     if (state) {
       canvas.classList.add("blurred");
       watermark.classList.add("watermark-active");
@@ -138,12 +139,20 @@
   window.addEventListener("mouseleave", () => applyBlur(true));
   window.addEventListener("mouseenter", () => applyBlur(false));
 
-  // 🚫 Bloquear clic derecho y activar marca de agua
+  // 🚫 Bloquear clic derecho + mantener lógica sincronizada
   document.addEventListener("contextmenu", (event) => {
-    event.preventDefault(); // bloquea el menú
+    event.preventDefault();
     applyBlur(true);
-    // quitar el efecto después de 4 segundos
-    setTimeout(() => applyBlur(false), 4000);
+
+    // Limpia cualquier timeout previo
+    if (blurTimeout) clearTimeout(blurTimeout);
+
+    // Solo quita el blur si sigue enfocado después de 4s
+    blurTimeout = setTimeout(() => {
+      if (!document.hidden && document.hasFocus()) {
+        applyBlur(false);
+      }
+    }, 4000);
   });
 
   // Bloqueo de orientación
@@ -165,6 +174,5 @@
   window.addEventListener("orientationchange", enforceLandscape);
   enforceLandscape();
 </script>
-
 </body>
 </html>

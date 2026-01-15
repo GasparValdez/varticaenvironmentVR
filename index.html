@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en-us">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -8,6 +9,7 @@
     <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
     <link rel="stylesheet" href="TemplateData/style.css">
 </head>
+
 <body>
     <div id="unity-container" class="unity-desktop">
         <div id="unity-canvas-container" style="width: 100%; height: 100%;">
@@ -23,7 +25,7 @@
         <div id="unity-footer">
             <div id="unity-webgl-logo"></div>
             <button id="entervr" value="Enter VR" disabled style="display:none;"></button>
-             <div id="unity-fullscreen-button"></div>
+            <div id="unity-fullscreen-button"></div>
             <div id="unity-build-title"></div>
         </div>
     </div>
@@ -81,17 +83,17 @@
         };
 
         // Configuración móvil
-  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-    var meta = document.createElement('meta');
-    meta.name = 'viewport';
-    meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-    document.getElementsByTagName('head')[0].appendChild(meta);
-    container.className = "unity-mobile";
-    canvas.className = "unity-mobile";
-  } else {
-    canvas.style.width = "960px";
-    canvas.style.height = "600px";
-  }
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            var meta = document.createElement('meta');
+            meta.name = 'viewport';
+            meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+            document.getElementsByTagName('head')[0].appendChild(meta);
+            container.className = "unity-mobile";
+            canvas.className = "unity-mobile";
+        } else {
+            canvas.style.width = "960px";
+            canvas.style.height = "600px";
+        }
 
         loadingBar.style.display = "block";
 
@@ -105,15 +107,18 @@
                 loadingBar.style.display = "none";
 
                 // Al cargar, cualquier toque activa Fullscreen (independiente del modo VR)
-                const requestFullScreenOnTouch = () => {
-                    if (!document.fullscreenElement) {
+                const requestFullScreenOnTouch = (event) => {
+                    // Si NO estamos en pantalla completa, la activamos
+                    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                         unityInstance.SetFullscreen(1);
                     }
+                    // Si YA estamos en pantalla completa, NO hacemos nada aquí 
+                    // y dejamos que Unity maneje el clic para el modo VR
                 };
 
-                document.addEventListener("touchend", requestFullScreenOnTouch);
-                document.addEventListener("click", requestFullScreenOnTouch);
-
+                // Usamos mousedown en lugar de click para que sea más rápido que el evento de Unity
+                document.addEventListener("mousedown", requestFullScreenOnTouch);
+                document.addEventListener("touchstart", requestFullScreenOnTouch);
             }).catch((message) => alert(message));
         };
         document.body.appendChild(script);
@@ -182,9 +187,9 @@
             const isPortrait = window.innerHeight > window.innerWidth;
             rotateWarning.style.display = isPortrait ? "flex" : "none";
             canvas.style.visibility = isPortrait ? "hidden" : "visible";
-            
+
             if (screen.orientation && screen.orientation.lock && !isPortrait) {
-                screen.orientation.lock("landscape").catch(() => {});
+                screen.orientation.lock("landscape").catch(() => { });
             }
         }
 
@@ -193,4 +198,5 @@
         enforceLandscape();
     </script>
 </body>
+
 </html>

@@ -4,20 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>KreaVerse | VARTICA Metaverse</title>
+  <title>VARTICA Metaverse VR | KreaVerse</title>
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
-  <link rel="stylesheet" href="TemplateData/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="unity-container" class="unity-desktop">
-    <canvas id="unity-canvas" width=960 height=600></canvas>
+  <div id="unity-container">
+    <div id="unity-canvas-container">
+      <canvas id="unity-canvas"></canvas>
+    </div>
     <div id="unity-loading-bar">
       <div id="unity-logo"></div>
       <div id="unity-progress-bar-empty">
         <div id="unity-progress-bar-full"></div>
       </div>
     </div>
-     <div id="unity-warning"></div>
     <div id="unity-footer">
       <div id="unity-webgl-logo"></div>
       <button id="entervr" value="Enter VR" disabled></button>
@@ -49,7 +50,6 @@
     var canvasContainer = document.querySelector("#unity-canvas-container");
     var loadingBar = document.querySelector("#unity-loading-bar");
     var progressBarFull = document.querySelector("#unity-progress-bar-full");
-    var warningBanner = document.querySelector("#unity-warning");
     var rotateWarning = document.querySelector("#rotate-warning");
     var watermark = document.querySelector(".watermark-image");
     var unityInstance = null;

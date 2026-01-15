@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en-us">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Unity WebGL Player | VARTICAMetaverse VR</title>
     <link rel="stylesheet" href="TemplateData/style.css">
 </head>
+
 <body>
     <div id="unity-container">
         <div id="unity-canvas-container">
@@ -20,7 +22,8 @@
         <div id="unity-footer">
             <div id="unity-webgl-logo"></div>
             <button id="entervr" value="Enter VR" disabled style="display:none;"></button>
-            <div id="unity-webxr-link">Using <a href="https://github.com/De-Panther/unity-webxr-export" target="_blank" title="WebXR Export">WebXR Export</a></div>
+            <div id="unity-webxr-link">Using <a href="https://github.com/De-Panther/unity-webxr-export" target="_blank"
+                    title="WebXR Export">WebXR Export</a></div>
             <div id="unity-build-title">VARTICAMetaverse</div>
         </div>
     </div>
@@ -38,12 +41,14 @@
             productVersion: "3.2",
         };
 
+        var container = document.querySelector("#unity-container");
         var canvas = document.querySelector("#unity-canvas");
         var canvasContainer = document.querySelector("#unity-canvas-container");
         var loadingBar = document.querySelector("#unity-loading-bar");
         var progressBarFull = document.querySelector("#unity-progress-bar-full");
         var unityInstance = null;
 
+        // Tamaño original de la plantilla
         canvasContainer.style.width = "900px";
         canvasContainer.style.height = "600px";
         loadingBar.style.display = "block";
@@ -59,19 +64,22 @@
 
                 const activarVRDirecto = () => {
                     let btn = document.getElementById('entervr');
+
                     if (btn && !btn.disabled) {
+                        // 1. Pedir Pantalla Completa primero
                         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                             unityInstance.SetFullscreen(1);
                         }
+
+                        // 2. Activar el VR inmediatamente después
+                        // Al estar en el mismo bloque de código, el navegador lo cuenta como una sola acción
                         unityInstance.Module.WebXR.toggleVR();
+
+                        // 3. Remover los listeners para que clics posteriores no reinicien el proceso
                         canvas.removeEventListener("touchstart", activarVRDirecto);
                         canvas.removeEventListener("mousedown", activarVRDirecto);
                     }
                 };
-
-                // ESTAS LÍNEAS ACTIVAN LA FUNCIÓN
-                canvas.addEventListener("touchstart", activarVRDirecto);
-                canvas.addEventListener("mousedown", activarVRDirecto);
 
             }).catch((message) => { alert(message); });
         };
@@ -82,4 +90,5 @@
         }, false);
     </script>
 </body>
+
 </html>

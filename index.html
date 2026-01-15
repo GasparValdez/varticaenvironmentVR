@@ -3,23 +3,29 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | VARTICAMetaverse VR</title>
+    <title>Unity WebGL Player | VARTICAMetaverse</title>
+    <meta name="description" content="">
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
   </head>
   <body>
     <div id="unity-container">
-      <canvas id="unity-canvas"></canvas>
-      
+      <div id="unity-canvas-container">
+        <canvas id="unity-canvas" style="width: 100%; height: 100%;"></canvas>
+      </div>
       <div id="unity-loading-bar">
         <div id="unity-logo"></div>
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
         </div>
       </div>
-
-      <button id="entervr" style="display:none;" disabled></button>
+      <div id="unity-footer">
+        <div id="unity-webgl-logo"></div>
+        <button id="entervr" style="display:none;" disabled></button>
+        <div id="unity-webxr-link">Using <a href="https://github.com/De-Panther/unity-webxr-export" target="_blank" title="WebXR Export">WebXR Export</a></div>
+        <div id="unity-build-title">VARTICAMetaverse</div>
+      </div>
     </div>
-
     <script>
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/game.loader.js";

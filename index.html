@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>VARTICA Metaverse VR | KreaVerse</title>
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
-    <link rel="stylesheet" href="TemplateData/style.css">
+  <link rel="stylesheet" href="TemplateData/style.css">
 </head>
 <body>
   <div id="unity-container">
@@ -29,7 +29,8 @@
   <div class="watermark-image"></div>
 
   <div id="rotate-warning">
-    Por favor, gira tu dispositivo en horizontal. / Please, rotate your device horizontally.
+    <div>Por favor, gira tu dispositivo en horizontal.</div>
+    <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Please, rotate your device horizontally.</div>
   </div>
 
   <script>
@@ -54,10 +55,9 @@
     var watermark = document.querySelector(".watermark-image");
     var unityInstance = null;
 
-    // Tamaño base del contenedor
     canvasContainer.style.width = "900px";
     canvasContainer.style.height = "600px";
-    loadingBar.style.display = "block";
+    loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
 
     var script = document.createElement("script");
     script.src = loaderUrl;
@@ -68,7 +68,6 @@
         unityInstance = instance;
         loadingBar.style.display = "none";
 
-        // --- LÓGICA VR POR INTERACCIÓN DIRECTA ---
         const activarVRDirecto = () => {
           let btn = document.getElementById('entervr');
           if (btn && !btn.disabled) {
@@ -84,7 +83,6 @@
     };
     document.body.appendChild(script);
 
-    // --- FUNCIONES DE SEGURIDAD (BLUR + WATERMARK) ---
     function applyBlur(state) {
       if (state) {
         canvas.classList.add("blurred");
@@ -99,14 +97,12 @@
     window.addEventListener("blur", () => applyBlur(true));
     window.addEventListener("focus", () => applyBlur(false));
 
-    // Bloqueo de clic derecho
     document.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       applyBlur(true);
       setTimeout(() => { if (!document.hidden) applyBlur(false); }, 4000);
     });
 
-    // --- CONTROL DE ORIENTACIÓN ---
     function enforceLandscape() {
       const isPortrait = window.innerHeight > window.innerWidth;
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -123,7 +119,6 @@
     window.addEventListener("resize", enforceLandscape);
     enforceLandscape();
 
-    // Evento de soporte WebXR del plugin
     document.addEventListener('onVRSupportedCheck', function (event) {
       document.getElementById('entervr').disabled = !event.detail.supported;
     }, false);

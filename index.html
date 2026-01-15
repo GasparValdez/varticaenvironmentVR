@@ -27,63 +27,68 @@
       </div>
     </div>
     <script>
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/game.loader.js";
-      var config = {
-        dataUrl: buildUrl + "/game.data",
-        frameworkUrl: buildUrl + "/game.framework.js",
-        codeUrl: buildUrl + "/game.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "KreaVerse",
-        productName: "VARTICAMetaverse",
-        productVersion: "3.2",
-      };
+        var container = document.querySelector("#unity-container");
+        var canvas = document.querySelector("#unity-canvas");
+        var loadingBar = document.querySelector("#unity-loading-bar");
+        var progressBarFull = document.querySelector("#unity-progress-bar-full");
+        var enterVRButton = document.getElementById('entervr');
+        var unityInstance = null;
 
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var canvasContainer = document.querySelector("#unity-canvas-container");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-      var unityInstance = null;
-      
+        var buildUrl = "Build";
+        var loaderUrl = buildUrl + "/game.loader.js";
+        var config = {
+            dataUrl: buildUrl + "/game.data",
+            frameworkUrl: buildUrl + "/game.framework.js",
+            codeUrl: buildUrl + "/game.wasm",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "KreaVerse",
+            productName: "VARTICAMetaverse",
+            productVersion: "3.2",
+        };
 
-      canvasContainer.style.width = "900px";
-      canvasContainer.style.height = "600px";
-      loadingBar.style.display = "block";
+        // Forzar dimensiones iniciales
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        loadingBar.style.display = "block";
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-        }).then((instance) => {
-          unityInstance = instance;
-          loadingBar.style.display = "none";
-          if (fullscreenButton)
-          {
-            fullscreenButton.onclick = () => {
-              unityInstance.SetFullscreen(1);
-            };
-          }
-        }).catch((message) => {
-          alert(message);
-        });
-      };
-      document.body.appendChild(script);
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+            createUnityInstance(canvas, config, (progress) => {
+                progressBarFull.style.width = 100 * progress + "%";
+            }).then((instance) => {
+                unityInstance = instance;
+                loadingBar.style.display = "none";
 
-    
-      let enterVRButton = document.getElementById('entervr');
+                // --- LÓGICA DE INTERACCIÓN UNIFICADA ---
+                // Esta función maneja tanto el Fullscreen como el VR en el mismo evento
+                const handleUserInteraction = (event) => {
+                    // 1. Intentar Pantalla Completa si el navegador lo permite y no está activo
+                    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                        unityInstance.SetFullscreen(1);
+                    }
 
-    
-      document.addEventListener('onVRSupportedCheck', function (event) {
-        enterVRButton.disabled = !event.detail.supported;
-      }, false);
+                    // 2. Intentar Activar VR solo si el botón interno ya fue habilitado por WebXR
+                    // (Esto significa que ya estamos en la escena de la Galería VR)
+                    if (enterVRButton && !enterVRButton.disabled) {
+                        // Llamamos directamente a la API de WebXR cargada en la instancia de Unity
+                        unityInstance.Module.WebXR.toggleVR();
+                        console.log("Activando Modo VR y Fullscreen simultáneamente");
+                    }
+                };
 
-    
-      enterVRButton.addEventListener('click', function (event) {
-        unityInstance.Module.WebXR.toggleVR();
-      }, false);
+                // Registramos los eventos de toque y clic directamente sobre el contenedor
+                container.addEventListener("mousedown", handleUserInteraction);
+                container.addEventListener("touchstart", handleUserInteraction);
+
+            }).catch((message) => { alert(message); });
+        };
+        document.body.appendChild(script);
+
+        // WebXR API: Escucha cuando el navegador confirma que el VR está listo para usarse
+        document.addEventListener('onVRSupportedCheck', function (event) {
+            enterVRButton.disabled = !event.detail.supported;
+        }, false);
     </script>
   </body>
 </html>

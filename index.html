@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>KreaVerse | VARTICA Metaverse VR</title>
+  <title>VARTICA Metaverse VR | KreaVerse</title>
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
-  <link rel="stylesheet" href="TemplateData/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="unity-container">
@@ -21,7 +21,8 @@
     </div>
     <div id="unity-footer">
       <div id="unity-webgl-logo"></div>
-      <button id="entervr" value="Enter VR" disabled style="display:none;"></button>
+      <button id="entervr" value="Enter VR" disabled></button>
+      <div id="unity-build-title">VARTICAMetaverse</div>
     </div>
   </div>
 
@@ -32,15 +33,6 @@
   </div>
 
   <script>
-    var container = document.querySelector("#unity-container");
-    var canvas = document.querySelector("#unity-canvas");
-    var canvasContainer = document.querySelector("#unity-canvas-container");
-    var loadingBar = document.querySelector("#unity-loading-bar");
-    var progressBarFull = document.querySelector("#unity-progress-bar-full");
-    var rotateWarning = document.querySelector("#rotate-warning");
-    var watermark = document.querySelector(".watermark-image");
-    var unityInstance = null;
-
     var buildUrl = "Build";
     var loaderUrl = buildUrl + "/game.loader.js";
     var config = {
@@ -53,14 +45,18 @@
       productVersion: "3.2",
     };
 
-    // Tamaño original/responsivo
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      container.className = "unity-mobile";
-    } else {
-      canvasContainer.style.width = "900px";
-      canvasContainer.style.height = "600px";
-    }
+    var container = document.querySelector("#unity-container");
+    var canvas = document.querySelector("#unity-canvas");
+    var canvasContainer = document.querySelector("#unity-canvas-container");
+    var loadingBar = document.querySelector("#unity-loading-bar");
+    var progressBarFull = document.querySelector("#unity-progress-bar-full");
+    var rotateWarning = document.querySelector("#rotate-warning");
+    var watermark = document.querySelector(".watermark-image");
+    var unityInstance = null;
 
+    // Tamaño base del contenedor
+    canvasContainer.style.width = "900px";
+    canvasContainer.style.height = "600px";
     loadingBar.style.display = "block";
 
     var script = document.createElement("script");
@@ -72,11 +68,11 @@
         unityInstance = instance;
         loadingBar.style.display = "none";
 
-        // ACTIVACIÓN DIRECTA DE VR AL TOCAR
+        // --- LÓGICA VR POR INTERACCIÓN DIRECTA ---
         const activarVRDirecto = () => {
           let btn = document.getElementById('entervr');
           if (btn && !btn.disabled) {
-            // Activa el modo VR directamente
+            if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
             unityInstance.Module.WebXR.toggleVR();
           }
         };
@@ -84,18 +80,38 @@
         canvas.addEventListener("touchstart", activarVRDirecto);
         canvas.addEventListener("mousedown", activarVRDirecto);
 
-      }).catch((message) => alert(message));
+      }).catch((message) => { alert(message); });
     };
     document.body.appendChild(script);
 
-    document.addEventListener('onVRSupportedCheck', function (event) {
-      document.getElementById('entervr').disabled = !event.detail.supported;
-    }, false);
+    // --- FUNCIONES DE SEGURIDAD (BLUR + WATERMARK) ---
+    function applyBlur(state) {
+      if (state) {
+        canvas.classList.add("blurred");
+        watermark.classList.add("watermark-active");
+      } else {
+        canvas.classList.remove("blurred");
+        watermark.classList.remove("watermark-active");
+      }
+    }
 
-    // Bloqueo de orientación
+    document.addEventListener("visibilitychange", () => applyBlur(document.hidden));
+    window.addEventListener("blur", () => applyBlur(true));
+    window.addEventListener("focus", () => applyBlur(false));
+
+    // Bloqueo de clic derecho
+    document.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      applyBlur(true);
+      setTimeout(() => { if (!document.hidden) applyBlur(false); }, 4000);
+    });
+
+    // --- CONTROL DE ORIENTACIÓN ---
     function enforceLandscape() {
       const isPortrait = window.innerHeight > window.innerWidth;
-      if (isPortrait) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isPortrait && isMobile) {
         rotateWarning.style.display = "flex";
         container.style.display = "none";
       } else {
@@ -105,8 +121,12 @@
     }
 
     window.addEventListener("resize", enforceLandscape);
-    window.addEventListener("orientationchange", enforceLandscape);
     enforceLandscape();
+
+    // Evento de soporte WebXR del plugin
+    document.addEventListener('onVRSupportedCheck', function (event) {
+      document.getElementById('entervr').disabled = !event.detail.supported;
+    }, false);
   </script>
 </body>
 </html>

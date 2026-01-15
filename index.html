@@ -3,9 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | VARTICAMetaverse</title>
-    <meta name="description" content="">
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <title>Unity WebGL Player | VARTICAMetaverse VR</title>
     <link rel="stylesheet" href="TemplateData/style.css">
   </head>
   <body>
@@ -21,11 +19,12 @@
       </div>
       <div id="unity-footer">
         <div id="unity-webgl-logo"></div>
-        <button id="entervr" style="display:none;" disabled></button>
+        <button id="entervr" value="Enter VR" disabled style="display:none;"></button>
         <div id="unity-webxr-link">Using <a href="https://github.com/De-Panther/unity-webxr-export" target="_blank" title="WebXR Export">WebXR Export</a></div>
         <div id="unity-build-title">VARTICAMetaverse</div>
       </div>
     </div>
+
     <script>
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/game.loader.js";
@@ -39,11 +38,17 @@
         productVersion: "3.2",
       };
 
+      var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
+      var canvasContainer = document.querySelector("#unity-canvas-container");
       var loadingBar = document.querySelector("#unity-loading-bar");
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var container = document.querySelector("#unity-container");
       var unityInstance = null;
+
+      // Tamaño original de la plantilla
+      canvasContainer.style.width = "900px";
+      canvasContainer.style.height = "600px";
+      loadingBar.style.display = "block";
 
       var script = document.createElement("script");
       script.src = loaderUrl;
@@ -57,17 +62,13 @@
           // --- ACTIVACIÓN DIRECTA POR TOQUE ---
           const activarVRDirecto = () => {
               let btn = document.getElementById('entervr');
-              // Solo se activa si WebXR ya reportó que el VR es soportado
               if (btn && !btn.disabled) {
-                  // Entrar en Fullscreen y VR simultáneamente para evitar bloqueos
-                  if (!document.fullscreenElement) {
-                      unityInstance.SetFullscreen(1);
-                  }
+                  // Entrar en Fullscreen y VR al mismo tiempo
+                  if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
                   unityInstance.Module.WebXR.toggleVR();
               }
           };
 
-          // Detectar toque en el canvas o contenedor
           canvas.addEventListener("touchstart", activarVRDirecto);
           canvas.addEventListener("mousedown", activarVRDirecto);
 
@@ -75,7 +76,6 @@
       };
       document.body.appendChild(script);
 
-      // Listener para que Unity habilite el botón interno cuando el sistema VR esté listo
       document.addEventListener('onVRSupportedCheck', function (event) {
         document.getElementById('entervr').disabled = !event.detail.supported;
       }, false);

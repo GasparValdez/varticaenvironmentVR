@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en-us">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -9,7 +8,6 @@
     <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
     <link rel="stylesheet" href="TemplateData/style.css">
 </head>
-
 <body>
     <div id="unity-container" class="unity-desktop">
         <div id="unity-canvas-container" style="width: 100%; height: 100%;">
@@ -25,8 +23,8 @@
         <div id="unity-footer">
             <div id="unity-webgl-logo"></div>
             <button id="entervr" value="Enter VR" disabled style="display:none;"></button>
-            <div id="unity-fullscreen-button"></div>
-            <div id="unity-build-title"></div>
+            <div id="unity-fullscreen-button" style="display:none;"></div>
+            <div id="unity-build-title">VARTICAMetaverse</div>
         </div>
     </div>
 
@@ -82,17 +80,13 @@
             showBanner: unityShowBanner,
         };
 
-        // Configuración móvil
+        // --- Lógica Móvil y Pantalla Completa ---
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            var meta = document.createElement('meta');
-            meta.name = 'viewport';
-            meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-            document.getElementsByTagName('head')[0].appendChild(meta);
             container.className = "unity-mobile";
             canvas.className = "unity-mobile";
         } else {
-            canvas.style.width = "960px";
-            canvas.style.height = "600px";
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
         }
 
         loadingBar.style.display = "block";
@@ -106,24 +100,16 @@
                 unityInstance = instance;
                 loadingBar.style.display = "none";
 
-                const manejarInteraccionGlobal = (event) => {
-                    // 1. Siempre intentamos poner Pantalla Completa si no lo está
-                    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                // Al cargar, cualquier toque activa Fullscreen (independiente del modo VR)
+                const requestFullScreenOnTouch = () => {
+                    if (!document.fullscreenElement) {
                         unityInstance.SetFullscreen(1);
-                    }
-
-                    // 2. Si el botón de VR existe y está habilitado (significa que estamos en la escena VR)
-                    // lanzamos el ToggleVR directamente desde JavaScript para que el navegador confíe.
-                    if (enterVRButton && !enterVRButton.disabled) {
-                        // Ejecutamos el ToggleVR del módulo WebXR de inmediato
-                        unityInstance.Module.WebXR.toggleVR();
-                        console.log("WebXR: Activando visor desde JS para asegurar compatibilidad.");
                     }
                 };
 
-                // Registramos el evento de toque/clic directamente en el documento
-                document.addEventListener("mousedown", manejarInteraccionGlobal);
-                document.addEventListener("touchstart", manejarInteraccionGlobal);
+                document.addEventListener("touchend", requestFullScreenOnTouch);
+                document.addEventListener("click", requestFullScreenOnTouch);
+
             }).catch((message) => alert(message));
         };
         document.body.appendChild(script);
@@ -136,35 +122,6 @@
         enterVRButton.addEventListener('click', function (event) {
             unityInstance.Module.WebXR.toggleVR();
         }, false);
-
-        // --- Fullscreen: Sincronizar borde y marca de agua ---
-        document.addEventListener("fullscreenchange", () => {
-            const isFullscreen = !!document.fullscreenElement;
-            if (isFullscreen) {
-                canvas.classList.add("no-border");
-                if (!document.querySelector(".watermark-fullscreen")) {
-                    const wmClone = document.createElement("div");
-                    wmClone.className = "watermark-fullscreen";
-                    wmClone.style.position = "fixed";
-                    wmClone.style.top = "0";
-                    wmClone.style.left = "0";
-                    wmClone.style.width = "100%";
-                    wmClone.style.height = "100%";
-                    wmClone.style.pointerEvents = "none";
-                    wmClone.style.zIndex = "999999";
-                    wmClone.style.opacity = "0.15";
-                    wmClone.style.backgroundImage = getComputedStyle(watermark).backgroundImage;
-                    wmClone.style.backgroundRepeat = "repeat";
-                    wmClone.style.backgroundSize = "250px";
-                    wmClone.style.transform = "rotate(-25deg)";
-                    document.body.appendChild(wmClone);
-                }
-            } else {
-                canvas.classList.remove("no-border");
-                const fsWatermark = document.querySelector(".watermark-fullscreen");
-                if (fsWatermark) fsWatermark.remove();
-            }
-        });
 
         // --- Seguridad y Blur ---
         function applyBlur(state) {
@@ -192,9 +149,9 @@
             const isPortrait = window.innerHeight > window.innerWidth;
             rotateWarning.style.display = isPortrait ? "flex" : "none";
             canvas.style.visibility = isPortrait ? "hidden" : "visible";
-
+            
             if (screen.orientation && screen.orientation.lock && !isPortrait) {
-                screen.orientation.lock("landscape").catch(() => { });
+                screen.orientation.lock("landscape").catch(() => {});
             }
         }
 
@@ -203,5 +160,4 @@
         enforceLandscape();
     </script>
 </body>
-
 </html>

@@ -106,19 +106,24 @@
                 unityInstance = instance;
                 loadingBar.style.display = "none";
 
-                // Al cargar, cualquier toque activa Fullscreen (independiente del modo VR)
-                const requestFullScreenOnTouch = (event) => {
-                    // Si NO estamos en pantalla completa, la activamos
+                const manejarInteraccionGlobal = (event) => {
+                    // 1. Siempre intentamos poner Pantalla Completa si no lo está
                     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                         unityInstance.SetFullscreen(1);
                     }
-                    // Si YA estamos en pantalla completa, NO hacemos nada aquí 
-                    // y dejamos que Unity maneje el clic para el modo VR
+
+                    // 2. Si el botón de VR existe y está habilitado (significa que estamos en la escena VR)
+                    // lanzamos el ToggleVR directamente desde JavaScript para que el navegador confíe.
+                    if (enterVRButton && !enterVRButton.disabled) {
+                        // Ejecutamos el ToggleVR del módulo WebXR de inmediato
+                        unityInstance.Module.WebXR.toggleVR();
+                        console.log("WebXR: Activando visor desde JS para asegurar compatibilidad.");
+                    }
                 };
 
-                // Usamos mousedown en lugar de click para que sea más rápido que el evento de Unity
-                document.addEventListener("mousedown", requestFullScreenOnTouch);
-                document.addEventListener("touchstart", requestFullScreenOnTouch);
+                // Registramos el evento de toque/clic directamente en el documento
+                document.addEventListener("mousedown", manejarInteraccionGlobal);
+                document.addEventListener("touchstart", manejarInteraccionGlobal);
             }).catch((message) => alert(message));
         };
         document.body.appendChild(script);

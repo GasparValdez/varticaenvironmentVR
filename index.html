@@ -8,23 +8,20 @@
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
   <link rel="stylesheet" href="TemplateData/style.css">
 </head>
-
 <body>
   <div id="unity-container">
     <div id="unity-canvas-container">
       <canvas id="unity-canvas"></canvas>
     </div>
-
     <div id="unity-loading-bar">
       <div id="unity-logo"></div>
       <div id="unity-progress-bar-empty">
         <div id="unity-progress-bar-full"></div>
       </div>
     </div>
-
     <div id="unity-footer">
       <div id="unity-webgl-logo"></div>
-      <button id="entervr" disabled></button>
+      <button id="entervr" value="Enter VR" disabled></button>
       <div id="unity-build-title">VARTICAMetaverse</div>
     </div>
   </div>
@@ -32,17 +29,13 @@
   <div class="watermark-image"></div>
 
   <div id="rotate-warning">
-    <div>Por favor, gira tu dispositivo en horizontal / Please rotate your device horizontally.</div>
+    <div>Por favor, gira tu dispositivo en horizontal / Please, rotate your device horizontally.</div>
   </div>
 
   <script>
-    /* =========================
-       CONFIGURACIÓN UNITY
-    ========================= */
-    const buildUrl = "Build";
-    const loaderUrl = buildUrl + "/game.loader.js";
-
-    const config = {
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/game.loader.js";
+    var config = {
       dataUrl: buildUrl + "/game.data",
       frameworkUrl: buildUrl + "/game.framework.js",
       codeUrl: buildUrl + "/game.wasm",
@@ -52,102 +45,67 @@
       productVersion: "3.2",
     };
 
-    const container = document.getElementById("unity-container");
-    const canvas = document.getElementById("unity-canvas");
-    const canvasContainer = document.getElementById("unity-canvas-container");
-    const loadingBar = document.getElementById("unity-loading-bar");
-    const progressBarFull = document.getElementById("unity-progress-bar-full");
-    const rotateWarning = document.getElementById("rotate-warning");
-    const watermark = document.querySelector(".watermark-image");
-    const enterVRButton = document.getElementById("entervr");
-
-    let unityInstance = null;
-    let estaEnVR = false;
+    var container = document.querySelector("#unity-container");
+    var canvas = document.querySelector("#unity-canvas");
+    var canvasContainer = document.querySelector("#unity-canvas-container");
+    var loadingBar = document.querySelector("#unity-loading-bar");
+    var progressBarFull = document.querySelector("#unity-progress-bar-full");
+    var rotateWarning = document.querySelector("#rotate-warning");
+    var watermark = document.querySelector(".watermark-image");
+    var unityInstance = null;
 
     canvasContainer.style.width = "900px";
     canvasContainer.style.height = "600px";
-    loadingBar.style.display = "flex";
+    loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
 
-    /* =========================
-       VR ACTIVATION (SOLO TOUCH)
-    ========================= */
-    function activarVRDirecto() {
-      if (!unityInstance || estaEnVR || enterVRButton.disabled) return;
-
-      if (!document.fullscreenElement) {
-        unityInstance.SetFullscreen(1);
-      }
-
-      unityInstance.Module.WebXR.toggleVR();
-      estaEnVR = true;
-    }
-
-    canvas.addEventListener("touchstart", activarVRDirecto, { passive: true });
-
-    document.addEventListener("onVREnd", () => {
-      estaEnVR = false;
-    });
-
-    /* =========================
-       BLOQUEO DE MOUSE (ANTI-BUG)
-    ========================= */
-    function bloquearMouseEnVR() {
-      const eventos = ["mousedown", "mouseup", "click", "dblclick", "contextmenu"];
-
-      eventos.forEach(evt => {
-        canvas.addEventListener(evt, (e) => {
-          if (estaEnVR) {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-          }
-        }, true);
-      });
-    }
-
-    document.addEventListener("fullscreenchange", () => {
-      if (estaEnVR && !document.fullscreenElement && unityInstance) {
-        unityInstance.SetFullscreen(1);
-      }
-    });
-
-    /* =========================
-       CARGA UNITY
-    ========================= */
-    const script = document.createElement("script");
+    var script = document.createElement("script");
     script.src = loaderUrl;
     script.onload = () => {
       createUnityInstance(canvas, config, (progress) => {
-        progressBarFull.style.width = `${progress * 100}%`;
+        progressBarFull.style.width = 100 * progress + "%";
       }).then((instance) => {
         unityInstance = instance;
         loadingBar.style.display = "none";
-        bloquearMouseEnVR();
-      }).catch(alert);
+
+        const activarVRDirecto = () => {
+          let btn = document.getElementById('entervr');
+          if (btn && !btn.disabled) {
+            if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
+            unityInstance.Module.WebXR.toggleVR();
+          }
+        };
+
+        canvas.addEventListener("touchstart", activarVRDirecto);
+        canvas.addEventListener("mousedown", activarVRDirecto);
+
+      }).catch((message) => { alert(message); });
     };
     document.body.appendChild(script);
 
-    /* =========================
-       BLUR / VISIBILITY
-    ========================= */
     function applyBlur(state) {
-      canvas.classList.toggle("blurred", state);
-      watermark.classList.toggle("watermark-active", state);
+      if (state) {
+        canvas.classList.add("blurred");
+        watermark.classList.add("watermark-active");
+      } else {
+        canvas.classList.remove("blurred");
+        watermark.classList.remove("watermark-active");
+      }
     }
 
     document.addEventListener("visibilitychange", () => applyBlur(document.hidden));
     window.addEventListener("blur", () => applyBlur(true));
     window.addEventListener("focus", () => applyBlur(false));
 
-    document.addEventListener("contextmenu", (e) => e.preventDefault());
+    document.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      applyBlur(true);
+      setTimeout(() => { if (!document.hidden) applyBlur(false); }, 4000);
+    });
 
-    /* =========================
-       ORIENTACIÓN
-    ========================= */
     function enforceLandscape() {
       const isPortrait = window.innerHeight > window.innerWidth;
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
       if (isPortrait && isMobile) {
         rotateWarning.style.display = "flex";
         container.style.display = "none";
@@ -160,13 +118,9 @@
     window.addEventListener("resize", enforceLandscape);
     enforceLandscape();
 
-    /* =========================
-       SOPORTE VR
-    ========================= */
-    document.addEventListener("onVRSupportedCheck", (event) => {
-      enterVRButton.disabled = !event.detail.supported;
+    document.addEventListener('onVRSupportedCheck', function (event) {
+      document.getElementById('entervr').disabled = !event.detail.supported;
     }, false);
-
   </script>
 </body>
 </html>

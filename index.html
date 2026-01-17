@@ -53,10 +53,32 @@
     var rotateWarning = document.querySelector("#rotate-warning");
     var watermark = document.querySelector(".watermark-image");
     var unityInstance = null;
+    // --- DENTRO DEL SCRIPT EN EL INDEX.HTML ---
 
+let estaEnVR = false; // Variable para rastrear el estado
+
+const activarVRDirecto = () => {
+    let btn = document.getElementById('entervr');
+    
+    // Solo actuamos si el botón está habilitado Y NO estamos ya en VR
+    if (btn && !btn.disabled && !estaEnVR) {
+        if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
+        unityInstance.Module.WebXR.toggleVR();
+        estaEnVR = true; // Marcamos que entramos
+    }
+};
+
+// Escuchamos los eventos de WebXR para resetear la variable si sales manualmente
+document.addEventListener('onVREnd', function () {
+    estaEnVR = false;
+});
+
+canvas.addEventListener("touchstart", activarVRDirecto);
+canvas.addEventListener("mousedown", activarVRDirecto);
     canvasContainer.style.width = "900px";
     canvasContainer.style.height = "600px";
     loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
+    
 
     var script = document.createElement("script");
     script.src = loaderUrl;

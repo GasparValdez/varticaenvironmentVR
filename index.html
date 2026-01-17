@@ -8,20 +8,23 @@
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
   <link rel="stylesheet" href="TemplateData/style.css">
 </head>
+
 <body>
   <div id="unity-container">
     <div id="unity-canvas-container">
       <canvas id="unity-canvas"></canvas>
     </div>
+
     <div id="unity-loading-bar">
       <div id="unity-logo"></div>
       <div id="unity-progress-bar-empty">
         <div id="unity-progress-bar-full"></div>
       </div>
     </div>
+
     <div id="unity-footer">
       <div id="unity-webgl-logo"></div>
-      <button id="entervr" value="Enter VR" disabled></button>
+      <button id="entervr" disabled>Enter VR</button>
       <div id="unity-build-title">VARTICAMetaverse</div>
     </div>
   </div>
@@ -32,95 +35,130 @@
     <div>Por favor, gira tu dispositivo en horizontal / Please, rotate your device horizontally.</div>
   </div>
 
-  <script>
-    var buildUrl = "Build";
-    var loaderUrl = buildUrl + "/game.loader.js";
-    var config = {
-      dataUrl: buildUrl + "/game.data",
-      frameworkUrl: buildUrl + "/game.framework.js",
-      codeUrl: buildUrl + "/game.wasm",
-      streamingAssetsUrl: "StreamingAssets",
-      companyName: "KreaVerse",
-      productName: "VARTICAMetaverse",
-      productVersion: "3.2",
-    };
+<script>
+/* ================= CONFIG ================= */
+var buildUrl = "Build";
+var loaderUrl = buildUrl + "/game.loader.js";
+var config = {
+  dataUrl: buildUrl + "/game.data",
+  frameworkUrl: buildUrl + "/game.framework.js",
+  codeUrl: buildUrl + "/game.wasm",
+  streamingAssetsUrl: "StreamingAssets",
+  companyName: "KreaVerse",
+  productName: "VARTICAMetaverse",
+  productVersion: "3.2",
+};
 
-    var container = document.querySelector("#unity-container");
-    var canvas = document.querySelector("#unity-canvas");
-    var canvasContainer = document.querySelector("#unity-canvas-container");
-    var loadingBar = document.querySelector("#unity-loading-bar");
-    var progressBarFull = document.querySelector("#unity-progress-bar-full");
-    var rotateWarning = document.querySelector("#rotate-warning");
-    var watermark = document.querySelector(".watermark-image");
-    var unityInstance = null;
+var container = document.querySelector("#unity-container");
+var canvas = document.querySelector("#unity-canvas");
+var canvasContainer = document.querySelector("#unity-canvas-container");
+var loadingBar = document.querySelector("#unity-loading-bar");
+var progressBarFull = document.querySelector("#unity-progress-bar-full");
+var rotateWarning = document.querySelector("#rotate-warning");
+var watermark = document.querySelector(".watermark-image");
 
-    canvasContainer.style.width = "900px";
-    canvasContainer.style.height = "600px";
-    loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
+var unityInstance = null;
+let estaEnVR = false;
 
-    var script = document.createElement("script");
-    script.src = loaderUrl;
-    script.onload = () => {
-      createUnityInstance(canvas, config, (progress) => {
-        progressBarFull.style.width = 100 * progress + "%";
-      }).then((instance) => {
-        unityInstance = instance;
-        loadingBar.style.display = "none";
+/* ================= UI SETUP ================= */
+canvasContainer.style.width = "900px";
+canvasContainer.style.height = "600px";
+loadingBar.style.display = "flex";
 
-        const activarVRDirecto = () => {
-          let btn = document.getElementById('entervr');
-          if (btn && !btn.disabled) {
-            if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
-            unityInstance.Module.WebXR.toggleVR();
-          }
-        };
+/* ================= LOAD UNITY ================= */
+var script = document.createElement("script");
+script.src = loaderUrl;
+script.onload = () => {
 
-        canvas.addEventListener("touchstart", activarVRDirecto);
-        canvas.addEventListener("mousedown", activarVRDirecto);
+  createUnityInstance(canvas, config, (progress) => {
+    progressBarFull.style.width = (100 * progress) + "%";
+  }).then((instance) => {
 
-      }).catch((message) => { alert(message); });
-    };
-    document.body.appendChild(script);
+    unityInstance = instance;
+    loadingBar.style.display = "none";
 
-    function applyBlur(state) {
-      if (state) {
-        canvas.classList.add("blurred");
-        watermark.classList.add("watermark-active");
-      } else {
-        canvas.classList.remove("blurred");
-        watermark.classList.remove("watermark-active");
+    /* ========== ACTIVAR VR (SOLO TOUCH) ========== */
+    function activarVRDirecto() {
+      let btn = document.getElementById("entervr");
+      if (!btn || btn.disabled || estaEnVR) return;
+
+      if (!document.fullscreenElement) {
+        unityInstance.SetFullscreen(1);
       }
+
+      unityInstance.Module.WebXR.toggleVR();
+      estaEnVR = true;
     }
 
-    document.addEventListener("visibilitychange", () => applyBlur(document.hidden));
-    window.addEventListener("blur", () => applyBlur(true));
-    window.addEventListener("focus", () => applyBlur(false));
+    canvas.addEventListener("touchstart", activarVRDirecto, { passive: true });
 
-    document.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      applyBlur(true);
-      setTimeout(() => { if (!document.hidden) applyBlur(false); }, 4000);
+    /* ========== BLOQUEAR MOUSE AL DOM (UI SAFE) ========== */
+    const eventosMouse = ["mousedown", "mouseup", "click", "dblclick", "contextmenu"];
+
+    eventosMouse.forEach(evt => {
+      canvas.addEventListener(evt, (e) => {
+        if (estaEnVR) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }, true);
     });
 
-    function enforceLandscape() {
-      const isPortrait = window.innerHeight > window.innerWidth;
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      
-      if (isPortrait && isMobile) {
-        rotateWarning.style.display = "flex";
-        container.style.display = "none";
-      } else {
-        rotateWarning.style.display = "none";
-        container.style.display = "block";
-      }
-    }
+  }).catch(alert);
+};
 
-    window.addEventListener("resize", enforceLandscape);
-    enforceLandscape();
+document.body.appendChild(script);
 
-    document.addEventListener('onVRSupportedCheck', function (event) {
-      document.getElementById('entervr').disabled = !event.detail.supported;
-    }, false);
-  </script>
+/* ================= PROTEGER FULLSCREEN ================= */
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement && estaEnVR && unityInstance) {
+    unityInstance.SetFullscreen(1);
+  }
+});
+
+/* ================= VR EVENTS ================= */
+document.addEventListener("onVREnd", () => {
+  estaEnVR = false;
+});
+
+/* ================= BLUR / FOCUS ================= */
+function applyBlur(state) {
+  if (state) {
+    canvas.classList.add("blurred");
+    watermark.classList.add("watermark-active");
+  } else {
+    canvas.classList.remove("blurred");
+    watermark.classList.remove("watermark-active");
+  }
+}
+
+document.addEventListener("visibilitychange", () => applyBlur(document.hidden));
+window.addEventListener("blur", () => applyBlur(true));
+window.addEventListener("focus", () => applyBlur(false));
+
+/* ================= ORIENTATION ================= */
+function enforceLandscape() {
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if (isPortrait && isMobile) {
+    rotateWarning.style.display = "flex";
+    container.style.display = "none";
+  } else {
+    rotateWarning.style.display = "none";
+    container.style.display = "block";
+  }
+}
+
+window.addEventListener("resize", enforceLandscape);
+enforceLandscape();
+
+/* ================= VR SUPPORT ================= */
+document.addEventListener("onVRSupportedCheck", function (event) {
+  document.getElementById("entervr").disabled = !event.detail.supported;
+});
+</script>
+
 </body>
 </html>

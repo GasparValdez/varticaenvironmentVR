@@ -53,13 +53,32 @@
     var rotateWarning = document.querySelector("#rotate-warning");
     var watermark = document.querySelector(".watermark-image");
     var unityInstance = null;
+    // --- DENTRO DEL SCRIPT EN EL INDEX.HTML ---
 
-    // VARIABLE DE CONTROL DE ESTADO
-    let estaEnVR = false;
+let estaEnVR = false; // Variable para rastrear el estado
 
+const activarVRDirecto = () => {
+    let btn = document.getElementById('entervr');
+    
+    // Solo actuamos si el botón está habilitado Y NO estamos ya en VR
+    if (btn && !btn.disabled && !estaEnVR) {
+        if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
+        unityInstance.Module.WebXR.toggleVR();
+        estaEnVR = true; // Marcamos que entramos
+    }
+};
+
+// Escuchamos los eventos de WebXR para resetear la variable si sales manualmente
+document.addEventListener('onVREnd', function () {
+    estaEnVR = false;
+});
+
+canvas.addEventListener("touchstart", activarVRDirecto);
+canvas.addEventListener("mousedown", activarVRDirecto);
     canvasContainer.style.width = "900px";
     canvasContainer.style.height = "600px";
-    loadingBar.style.display = "flex";
+    loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
+    
 
     var script = document.createElement("script");
     script.src = loaderUrl;
@@ -70,16 +89,11 @@
         unityInstance = instance;
         loadingBar.style.display = "none";
 
-        // FUNCION UNIFICADA CON BLOQUEO
         const activarVRDirecto = () => {
           let btn = document.getElementById('entervr');
-          // Solo si el botón existe, está habilitado y NO estamos ya en VR
-          if (btn && !btn.disabled && !estaEnVR) {
-            if (!document.fullscreenElement) {
-              unityInstance.SetFullscreen(1);
-            }
+          if (btn && !btn.disabled) {
+            if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
             unityInstance.Module.WebXR.toggleVR();
-            estaEnVR = true; // Bloqueamos clics posteriores
           }
         };
 
@@ -90,12 +104,6 @@
     };
     document.body.appendChild(script);
 
-    // RESETEAR ESTADO AL SALIR (Para permitir volver a entrar)
-    document.addEventListener('onVREnd', function () {
-      estaEnVR = false;
-    });
-
-    // Lógica de Blur y Orientación
     function applyBlur(state) {
       if (state) {
         canvas.classList.add("blurred");
@@ -110,9 +118,16 @@
     window.addEventListener("blur", () => applyBlur(true));
     window.addEventListener("focus", () => applyBlur(false));
 
+    document.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      applyBlur(true);
+      setTimeout(() => { if (!document.hidden) applyBlur(false); }, 4000);
+    });
+
     function enforceLandscape() {
       const isPortrait = window.innerHeight > window.innerWidth;
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
       if (isPortrait && isMobile) {
         rotateWarning.style.display = "flex";
         container.style.display = "none";

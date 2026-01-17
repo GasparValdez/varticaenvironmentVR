@@ -8,169 +8,142 @@
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
   <link rel="stylesheet" href="TemplateData/style.css">
 </head>
-
 <body>
-<div id="unity-container">
-  <div id="unity-canvas-container">
-    <canvas id="unity-canvas"></canvas>
-  </div>
-
-  <div id="unity-loading-bar">
-    <div id="unity-logo"></div>
-    <div id="unity-progress-bar-empty">
-      <div id="unity-progress-bar-full"></div>
+  <div id="unity-container">
+    <div id="unity-canvas-container">
+      <canvas id="unity-canvas"></canvas>
+    </div>
+    <div id="unity-loading-bar">
+      <div id="unity-logo"></div>
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
+      </div>
+    </div>
+    <div id="unity-footer">
+      <div id="unity-webgl-logo"></div>
+      <button id="entervr" value="Enter VR" disabled></button>
+      <div id="unity-build-title">VARTICAMetaverse</div>
     </div>
   </div>
 
-  <div id="unity-footer">
-    <div id="unity-webgl-logo"></div>
-    <button id="entervr" disabled></button>
-    <div id="unity-build-title">VARTICAMetaverse</div>
+  <div class="watermark-image"></div>
+
+  <div id="rotate-warning">
+    <div>Por favor, gira tu dispositivo en horizontal / Please, rotate your device horizontally.</div>
   </div>
-</div>
 
-<div class="watermark-image"></div>
+  <script>
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/game.loader.js";
+    var config = {
+      dataUrl: buildUrl + "/game.data",
+      frameworkUrl: buildUrl + "/game.framework.js",
+      codeUrl: buildUrl + "/game.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "KreaVerse",
+      productName: "VARTICAMetaverse",
+      productVersion: "3.2",
+    };
 
-<div id="rotate-warning">
-  <div>Por favor, gira tu dispositivo en horizontal / Please, rotate your device horizontally.</div>
-</div>
+    var container = document.querySelector("#unity-container");
+    var canvas = document.querySelector("#unity-canvas");
+    var canvasContainer = document.querySelector("#unity-canvas-container");
+    var loadingBar = document.querySelector("#unity-loading-bar");
+    var progressBarFull = document.querySelector("#unity-progress-bar-full");
+    var rotateWarning = document.querySelector("#rotate-warning");
+    var watermark = document.querySelector(".watermark-image");
+    var unityInstance = null;
 
-<script>
-/* ================= CONFIG ================= */
-var buildUrl = "Build";
-var loaderUrl = buildUrl + "/game.loader.js";
-var config = {
-  dataUrl: buildUrl + "/game.data",
-  frameworkUrl: buildUrl + "/game.framework.js",
-  codeUrl: buildUrl + "/game.wasm",
-  streamingAssetsUrl: "StreamingAssets",
-  companyName: "KreaVerse",
-  productName: "VARTICAMetaverse",
-  productVersion: "3.2",
-};
+    canvasContainer.style.width = "900px";
+    canvasContainer.style.height = "600px";
+    loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
 
-var container = document.querySelector("#unity-container");
-var canvas = document.querySelector("#unity-canvas");
-var canvasContainer = document.querySelector("#unity-canvas-container");
-var loadingBar = document.querySelector("#unity-loading-bar");
-var progressBarFull = document.querySelector("#unity-progress-bar-full");
-var rotateWarning = document.querySelector("#rotate-warning");
-var watermark = document.querySelector(".watermark-image");
+    /* ================= DESHABILITAR MOUSE 100% ================= */
+const mouseEvents = [
+  "mousedown",
+  "mouseup",
+  "mousemove",
+  "click",
+  "dblclick",
+  "wheel",
+  "contextmenu",
+  "pointerdown",
+  "pointerup",
+  "pointermove"
+];
 
-var unityInstance = null;
+mouseEvents.forEach(evt => {
+  document.addEventListener(evt, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }, true);
+});
 
-/* ================= UI SETUP ================= */
-canvasContainer.style.width = "900px";
-canvasContainer.style.height = "600px";
-loadingBar.style.display = "flex";
 
-/* ================= LOAD UNITY ================= */
-var script = document.createElement("script");
-script.src = loaderUrl;
-script.onload = () => {
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+      createUnityInstance(canvas, config, (progress) => {
+        progressBarFull.style.width = 100 * progress + "%";
+      }).then((instance) => {
+        unityInstance = instance;
+        loadingBar.style.display = "none";
 
-  createUnityInstance(canvas, config, (progress) => {
-    progressBarFull.style.width = (100 * progress) + "%";
-  }).then((instance) => {
+        const activarVRDirecto = () => {
+          let btn = document.getElementById('entervr');
+          if (btn && !btn.disabled) {
+            if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
+            unityInstance.Module.WebXR.toggleVR();
+          }
+        };
 
-    unityInstance = instance;
-    loadingBar.style.display = "none";
+        canvas.addEventListener("touchstart", activarVRDirecto);
+        //canvas.addEventListener("mousedown", activarVRDirecto);
 
-    /* ========== ACTIVAR VR (SOLO TOUCH REAL) ========== */
-    function activarVRDirecto() {
-      let btn = document.getElementById("entervr");
-      if (!btn || btn.disabled) return;
+      }).catch((message) => { alert(message); });
+    };
+    document.body.appendChild(script);
 
-      if (!document.fullscreenElement) {
-        unityInstance.SetFullscreen(1);
+    function applyBlur(state) {
+      if (state) {
+        canvas.classList.add("blurred");
+        watermark.classList.add("watermark-active");
+      } else {
+        canvas.classList.remove("blurred");
+        watermark.classList.remove("watermark-active");
       }
-
-      unityInstance.Module.WebXR.toggleVR();
     }
 
-    canvas.addEventListener("touchstart", activarVRDirecto, { passive: true });
+    document.addEventListener("visibilitychange", () => applyBlur(document.hidden));
+    window.addEventListener("blur", () => applyBlur(true));
+    window.addEventListener("focus", () => applyBlur(false));
 
-    /* ========== MOUSE → TOUCH (PARA UI) ========== */
-    canvas.addEventListener("mousedown", (e) => {
-      // Convertimos el click en touch para Unity
-      const touch = new Touch({
-        identifier: Date.now(),
-        target: canvas,
-        clientX: e.clientX,
-        clientY: e.clientY,
-        radiusX: 1,
-        radiusY: 1,
-        force: 1
-      });
-
-      const touchStart = new TouchEvent("touchstart", {
-        touches: [touch],
-        targetTouches: [touch],
-        changedTouches: [touch],
-        bubbles: true,
-        cancelable: true
-      });
-
-      const touchEnd = new TouchEvent("touchend", {
-        touches: [],
-        targetTouches: [],
-        changedTouches: [touch],
-        bubbles: true,
-        cancelable: true
-      });
-
-      canvas.dispatchEvent(touchStart);
-      setTimeout(() => canvas.dispatchEvent(touchEnd), 16);
+    document.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      applyBlur(true);
+      setTimeout(() => { if (!document.hidden) applyBlur(false); }, 4000);
     });
 
-  }).catch((message) => { alert(message); });
-};
+    function enforceLandscape() {
+      const isPortrait = window.innerHeight > window.innerWidth;
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isPortrait && isMobile) {
+        rotateWarning.style.display = "flex";
+        container.style.display = "none";
+      } else {
+        rotateWarning.style.display = "none";
+        container.style.display = "block";
+      }
+    }
 
-document.body.appendChild(script);
+    window.addEventListener("resize", enforceLandscape);
+    enforceLandscape();
 
-/* ================= BLUR / FOCUS ================= */
-function applyBlur(state) {
-  if (state) {
-    canvas.classList.add("blurred");
-    watermark.classList.add("watermark-active");
-  } else {
-    canvas.classList.remove("blurred");
-    watermark.classList.remove("watermark-active");
-  }
-}
-
-document.addEventListener("visibilitychange", () => applyBlur(document.hidden));
-window.addEventListener("blur", () => applyBlur(true));
-window.addEventListener("focus", () => applyBlur(false));
-
-document.addEventListener("contextmenu", (e) => {
-  e.preventDefault();
-  applyBlur(true);
-  setTimeout(() => { if (!document.hidden) applyBlur(false); }, 4000);
-});
-
-/* ================= ORIENTATION ================= */
-function enforceLandscape() {
-  const isPortrait = window.innerHeight > window.innerWidth;
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  if (isPortrait && isMobile) {
-    rotateWarning.style.display = "flex";
-    container.style.display = "none";
-  } else {
-    rotateWarning.style.display = "none";
-    container.style.display = "block";
-  }
-}
-
-window.addEventListener("resize", enforceLandscape);
-enforceLandscape();
-
-/* ================= VR SUPPORT ================= */
-document.addEventListener("onVRSupportedCheck", function (event) {
-  document.getElementById("entervr").disabled = !event.detail.supported;
-});
-</script>
-
+    document.addEventListener('onVRSupportedCheck', function (event) {
+      document.getElementById('entervr').disabled = !event.detail.supported;
+    }, false);
+  </script>
 </body>
 </html>

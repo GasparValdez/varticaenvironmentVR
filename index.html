@@ -113,7 +113,7 @@ document.addEventListener('onVREnd', function () {
   // ENVIAR MENSAJE A UNITY
   // "ControladorVR" debe ser el nombre EXACTO del objeto que tiene tu script en la jerarquía
   if(unityInstance != null) {
-      unityInstance.SendMessage('GameSettingsManager', 'ForzarSalidaVR');
+      unityInstance.SendMessage('WebXRCameraSet', 'ForzarSalidaVR');
   }
 }, false);
 

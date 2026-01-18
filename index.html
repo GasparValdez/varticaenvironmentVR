@@ -53,33 +53,21 @@
     var rotateWarning = document.querySelector("#rotate-warning");
     var watermark = document.querySelector(".watermark-image");
     var unityInstance = null;
+    let estaEnVR = false; // Control de estado para evitar re-activaciones
 
     canvasContainer.style.width = "900px";
     canvasContainer.style.height = "600px";
-    loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
+    loadingBar.style.display = "flex";
 
     /* ================= DESHABILITAR MOUSE 100% ================= */
-const mouseEvents = [
-  "mousedown",
-  "mouseup",
-  "mousemove",
-  "click",
-  "dblclick",
-  "wheel",
-  "contextmenu",
-  "pointerdown",
-  "pointerup",
-  "pointermove"
-];
-
-mouseEvents.forEach(evt => {
-  document.addEventListener(evt, (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  }, true);
-});
-
+    const mouseEvents = ["mousedown", "mouseup", "mousemove", "click", "dblclick", "wheel", "contextmenu", "pointerdown", "pointerup", "pointermove"];
+    mouseEvents.forEach(evt => {
+      document.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }, true);
+    });
 
     var script = document.createElement("script");
     script.src = loaderUrl;
@@ -92,18 +80,24 @@ mouseEvents.forEach(evt => {
 
         const activarVRDirecto = () => {
           let btn = document.getElementById('entervr');
-          if (btn && !btn.disabled) {
+          if (btn && !btn.disabled && !estaEnVR) {
             if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
             unityInstance.Module.WebXR.toggleVR();
+            estaEnVR = true;
           }
         };
 
         canvas.addEventListener("touchstart", activarVRDirecto);
-        //canvas.addEventListener("mousedown", activarVRDirecto);
-
       }).catch((message) => { alert(message); });
     };
     document.body.appendChild(script);
+
+    // RESETEO DE FOCO Y ESTADO AL SALIR
+    document.addEventListener('onVREnd', function () {
+      estaEnVR = false;
+      window.blur();
+      setTimeout(() => { window.focus(); }, 100);
+    }, false);
 
     function applyBlur(state) {
       if (state) {
@@ -119,16 +113,9 @@ mouseEvents.forEach(evt => {
     window.addEventListener("blur", () => applyBlur(true));
     window.addEventListener("focus", () => applyBlur(false));
 
-    document.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      applyBlur(true);
-      setTimeout(() => { if (!document.hidden) applyBlur(false); }, 4000);
-    });
-
     function enforceLandscape() {
       const isPortrait = window.innerHeight > window.innerWidth;
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      
       if (isPortrait && isMobile) {
         rotateWarning.style.display = "flex";
         container.style.display = "none";

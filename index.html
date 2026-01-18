@@ -8,17 +8,20 @@
   <link rel="shortcut icon" href="TemplateData/favicon2.ico?v=2" type="image/x-icon">
   <link rel="stylesheet" href="TemplateData/style.css">
 </head>
+
 <body>
   <div id="unity-container">
     <div id="unity-canvas-container">
       <canvas id="unity-canvas"></canvas>
     </div>
+
     <div id="unity-loading-bar">
       <div id="unity-logo"></div>
       <div id="unity-progress-bar-empty">
         <div id="unity-progress-bar-full"></div>
       </div>
     </div>
+
     <div id="unity-footer">
       <div id="unity-webgl-logo"></div>
       <button id="entervr" value="Enter VR" disabled></button>
@@ -35,6 +38,7 @@
   <script>
     var buildUrl = "Build";
     var loaderUrl = buildUrl + "/game.loader.js";
+
     var config = {
       dataUrl: buildUrl + "/game.data",
       frameworkUrl: buildUrl + "/game.framework.js",
@@ -52,37 +56,34 @@
     var progressBarFull = document.querySelector("#unity-progress-bar-full");
     var rotateWarning = document.querySelector("#rotate-warning");
     var watermark = document.querySelector(".watermark-image");
+
     var unityInstance = null;
 
     canvasContainer.style.width = "900px";
     canvasContainer.style.height = "600px";
-    loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
+    loadingBar.style.display = "flex";
 
-    /* ================= DESHABILITAR MOUSE 100% ================= */
-const mouseEvents = [
-  "mousedown",
-  "mouseup",
-  "mousemove",
-  "click",
-  "dblclick",
-  "wheel",
-  "contextmenu",
-  "pointerdown",
-  "pointerup",
-  "pointermove"
-];
+    /* ===== BLOQUEAR SOLO MOUSE (NO TOUCH / POINTER) ===== */
+    const mouseEvents = [
+      "mousedown",
+      "mouseup",
+      "mousemove",
+      "click",
+      "dblclick",
+      "wheel",
+      "contextmenu"
+    ];
 
-mouseEvents.forEach(evt => {
-  document.addEventListener(evt, (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  }, true);
-});
-
+    mouseEvents.forEach(evt => {
+      document.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+    });
 
     var script = document.createElement("script");
     script.src = loaderUrl;
+
     script.onload = () => {
       createUnityInstance(canvas, config, (progress) => {
         progressBarFull.style.width = 100 * progress + "%";
@@ -91,20 +92,23 @@ mouseEvents.forEach(evt => {
         loadingBar.style.display = "none";
 
         const activarVRDirecto = () => {
-          let btn = document.getElementById('entervr');
-          if (btn && !btn.disabled) {
-            if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
+          let btn = document.getElementById("entervr");
+          if (btn && !btn.disabled && unityInstance) {
+            if (!document.fullscreenElement) {
+              unityInstance.SetFullscreen(1);
+            }
             unityInstance.Module.WebXR.toggleVR();
           }
         };
 
-        canvas.addEventListener("touchstart", activarVRDirecto);
-        //canvas.addEventListener("mousedown", activarVRDirecto);
-
-      }).catch((message) => { alert(message); });
+        // 📱 TOQUE REAL EN MÓVIL
+        canvas.addEventListener("touchstart", activarVRDirecto, { passive: true });
+      });
     };
+
     document.body.appendChild(script);
 
+    /* ===== BLUR / WATERMARK ===== */
     function applyBlur(state) {
       if (state) {
         canvas.classList.add("blurred");
@@ -122,13 +126,16 @@ mouseEvents.forEach(evt => {
     document.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       applyBlur(true);
-      setTimeout(() => { if (!document.hidden) applyBlur(false); }, 4000);
+      setTimeout(() => {
+        if (!document.hidden) applyBlur(false);
+      }, 4000);
     });
 
+    /* ===== ORIENTACIÓN ===== */
     function enforceLandscape() {
       const isPortrait = window.innerHeight > window.innerWidth;
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      
+
       if (isPortrait && isMobile) {
         rotateWarning.style.display = "flex";
         container.style.display = "none";
@@ -141,8 +148,8 @@ mouseEvents.forEach(evt => {
     window.addEventListener("resize", enforceLandscape);
     enforceLandscape();
 
-    document.addEventListener('onVRSupportedCheck', function (event) {
-      document.getElementById('entervr').disabled = !event.detail.supported;
+    document.addEventListener("onVRSupportedCheck", function (event) {
+      document.getElementById("entervr").disabled = !event.detail.supported;
     }, false);
   </script>
 </body>

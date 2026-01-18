@@ -104,12 +104,7 @@ mouseEvents.forEach(evt => {
       }).catch((message) => { alert(message); });
     };
     document.body.appendChild(script);
-    // RESETEO DE FOCO Y ESTADO AL SALIR
-    document.addEventListener('onVREnd', function () {
-      estaEnVR = false;
-      window.blur();
-      setTimeout(() => { window.focus(); }, 500);
-    }, false);
+    
 
     function applyBlur(state) {
       if (state) {

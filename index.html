@@ -104,18 +104,6 @@ mouseEvents.forEach(evt => {
       }).catch((message) => { alert(message); });
     };
     document.body.appendChild(script);
-    // --- RESETEO DE FOCO Y ESTADO AL SALIR ---
-document.addEventListener('onVREnd', function () {
-  estaEnVR = false;
-  window.blur();
-  setTimeout(() => { window.focus(); }, 100);
-
-  // ENVIAR MENSAJE A UNITY
-  // "ControladorVR" debe ser el nombre EXACTO del objeto que tiene tu script en la jerarquía
-  if(unityInstance != null) {
-      unityInstance.SendMessage('WebXRCameraSet', 'ForzarSalidaVR');
-  }
-}, false);
 
     function applyBlur(state) {
       if (state) {

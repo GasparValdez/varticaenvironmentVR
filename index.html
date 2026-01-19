@@ -58,27 +58,7 @@
     canvasContainer.style.height = "600px";
     loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
 
-    /* ================= DESHABILITAR MOUSE 100% ================= */
-const mouseEvents = [
-  "mousedown",
-  "mouseup",
-  "mousemove",
-  "click",
-  "dblclick",
-  "wheel",
-  "contextmenu",
-  "pointerdown",
-  "pointerup",
-  "pointermove"
-];
 
-mouseEvents.forEach(evt => {
-  document.addEventListener(evt, (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  }, true);
-});
 
 
     var script = document.createElement("script");
@@ -99,7 +79,7 @@ mouseEvents.forEach(evt => {
         };
 
         canvas.addEventListener("touchstart", activarVRDirecto);
-        //canvas.addEventListener("mousedown", activarVRDirecto);
+        canvas.addEventListener("mousedown", activarVRDirecto);
 
       }).catch((message) => { alert(message); });
     };

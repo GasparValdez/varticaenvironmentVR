@@ -32,6 +32,19 @@
     <div>Por favor, gira tu dispositivo en horizontal / Please, rotate your device horizontally.</div>
   </div>
 
+  <!-- 🔒 CONTROL GLOBAL DEL MOUSE EN VR -->
+  <script>
+    let bloquearMouseEnVR = false;
+
+    document.addEventListener("mousedown", (e) => {
+      if (bloquearMouseEnVR) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }, true);
+  </script>
+
   <script>
     var buildUrl = "Build";
     var loaderUrl = buildUrl + "/game.loader.js";
@@ -56,10 +69,7 @@
 
     canvasContainer.style.width = "900px";
     canvasContainer.style.height = "600px";
-    loadingBar.style.display = "flex"; // Cambiado a flex para el centrado corregido
-
-
-
+    loadingBar.style.display = "flex";
 
     var script = document.createElement("script");
     script.src = loaderUrl;
@@ -70,10 +80,21 @@
         unityInstance = instance;
         loadingBar.style.display = "none";
 
+        //  WebXR: control real del estado VR
+        unityInstance.Module.WebXR.onEnterVR = () => {
+          bloquearMouseEnVR = true;
+        };
+
+        unityInstance.Module.WebXR.onExitVR = () => {
+          bloquearMouseEnVR = false;
+        };
+
         const activarVRDirecto = () => {
           let btn = document.getElementById('entervr');
           if (btn && !btn.disabled) {
-            if (!document.fullscreenElement) unityInstance.SetFullscreen(1);
+            if (!document.fullscreenElement)
+              unityInstance.SetFullscreen(1);
+
             unityInstance.Module.WebXR.toggleVR();
           }
         };
